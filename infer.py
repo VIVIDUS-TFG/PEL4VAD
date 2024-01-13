@@ -37,12 +37,30 @@ def infer_func(model, dataloader, gt, logger, cfg):
             gt_tmp = gt_tmp[seq_len[0]*16:]
 
         pred = list(pred.cpu().detach().numpy())
-        far = cal_false_alarm(normal_labels, normal_preds)
-        fpr, tpr, _ = roc_curve(list(gt), np.repeat(pred, 16))
-        roc_auc = auc(fpr, tpr)
-        pre, rec, _ = precision_recall_curve(list(gt), np.repeat(pred, 16))
-        pr_auc = auc(rec, pre)
+        pred_binary = [1 if pred_value > 0.5 else 0 for pred_value in pred]
 
-    time_elapsed = time.time() - st
-    logger.info('offline AUC:{:.4f} AP:{:.4f} FAR:{:.4f} | Complete in {:.0f}m {:.0f}s\n'.format(
-        roc_auc, pr_auc, far, time_elapsed // 60, time_elapsed % 60))
+        if any(pred == 1 for pred in pred_binary):
+            message= "El video contiene violencia"
+            message_frames = "En un rango de [0-"+ str(len(pred_binary) - 1) +"], los frames con violencia son: "
+
+            start_idx = None
+            for i, pred in enumerate(pred_binary):
+                if pred == 1:
+                    if start_idx is None:
+                        start_idx = i
+                elif start_idx is not None:
+                    message_frames += ("[" + str(start_idx) + " - " + str(i - 1) + "]" + ", ") if i-1 != start_idx else ("[" + str(start_idx) + "], ")
+                    start_idx = None
+
+            if start_idx is not None:
+                message_frames += ("[" + str(start_idx) + " - " + str(len(pred_binary) - 1) + "]") if len(pred_binary) - 1 != start_idx else ("[" + str(start_idx) + "]")
+            else:
+                message_frames = message_frames[:-2]              
+
+        else:
+            message= "El video no contiene violencia"
+            message_frames = "No hay frames con violencia"
+
+        time_elapsed = time.time() - st
+        print(' {}. {} \n'.format( message, message_frames))
+        print('Test complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60)) 
