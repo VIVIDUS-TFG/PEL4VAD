@@ -37,7 +37,7 @@ def infer_func(model, dataloader, gt, logger, cfg):
             gt_tmp = gt_tmp[seq_len[0]*16:]
 
         pred = list(pred.cpu().detach().numpy())
-        pred_binary = [1 if pred_value > 0.5 else 0 for pred_value in pred]
+        pred_binary = [1 if pred_value > 0.35 else 0 for pred_value in pred]
 
         if any(pred == 1 for pred in pred_binary):
             message= "El video contiene violencia"
