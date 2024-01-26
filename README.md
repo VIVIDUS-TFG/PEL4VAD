@@ -84,11 +84,11 @@ ckpt_path = './ckpt/ucf__8636.pkl'
 
 - Run the following command for **training**:
 ```
-python main.py --dataset 'ucf' --mode 'train'  # dataset:['ucf', 'xd', 'sh']  mode:['train', 'infer']
+python main.py --dataset 'xd' --mode 'train'  # dataset:['ucf', 'xd', 'sh']  mode:['train', 'infer']
 ```
 - Run the following command for **test/inference**:
 ```
-python main.py --dataset 'ucf' --mode 'infer'  # dataset:['ucf', 'xd', 'sh']  mode:['train', 'infer']
+python main.py --dataset 'xd' --mode 'infer'  # dataset:['ucf', 'xd', 'sh']  mode:['train', 'infer']
 ```
 
 ## Results and Models
