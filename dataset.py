@@ -84,8 +84,7 @@ class XDataset(data.Dataset):
 
         feat_path = os.path.join(self.feat_prefix, self.list[index].strip('\n'))
         v_feat = np.array(np.load(feat_path), dtype=np.float32)
-        tokens = self.list[index].strip('\n').split('_label_')[-1].split('__')[0].split('-')
-        idx = self.abnormal_dict[tokens[0]]
+        idx=0
         fg_feat = self.t_features[idx, :].reshape(1, 512)
         bg_feat = self.t_features[0, :].reshape(1, 512)
         t_feat = np.concatenate((bg_feat, fg_feat), axis=0)
