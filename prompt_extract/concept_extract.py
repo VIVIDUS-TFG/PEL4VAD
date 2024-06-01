@@ -10,7 +10,6 @@ import argparse
 def get_concept(dataset, labels, relations, file_name, filter=False):
     prompts = OrderedDict()
     for i, label in enumerate(labels):
-        print(label)
         if ' ' in label:
             label = label.replace(' ', '_')
         else:
@@ -22,7 +21,6 @@ def get_concept(dataset, labels, relations, file_name, filter=False):
 
         token_score = {}
         for j, rel in enumerate(relations):
-            print(rel, '-' * 20 + str(j))
             urls = 'http://api.conceptnet.io/query?node=/c/en/' + label + '&rel=/r/' + rel
             response = requests.get(urls)
             obj = response.json()
@@ -40,7 +38,6 @@ def get_concept(dataset, labels, relations, file_name, filter=False):
                 sim = 'http://api.conceptnet.io/relatedness?node1=/c/en/' + start + '&node2=/c/en/' + end
                 sim_score = requests.get(sim).json()
                 sss = sim_score['value']  # related score
-                print(start + ', ' + end + ', ' + str(sss))
 
                 # first step filtering in PEL
                 if filter:

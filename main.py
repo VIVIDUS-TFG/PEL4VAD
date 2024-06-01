@@ -13,7 +13,7 @@ from dataset import *
 
 from train import train_func
 from test import test_func
-from infer import infer_func
+#from infer import infer_func
 import argparse
 import copy
 
@@ -23,7 +23,6 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 def load_checkpoint(model, ckpt_path, logger):
     if os.path.isfile(ckpt_path):
-        logger.info('loading pretrained checkpoint from {}.'.format(ckpt_path))
         weight_dict = torch.load(ckpt_path)
         model_dict = model.state_dict()
         for name, param in weight_dict.items():
@@ -84,7 +83,6 @@ def train(model, train_loader, test_loader, gt, logger):
 def main(cfg):
     logger = get_logger(cfg.logs_dir)
     setup_seed(cfg.seed)
-    logger.info('Config:{}'.format(cfg.__dict__))
 
     if cfg.dataset == 'ucf-crime':
         train_data = UCFDataset(cfg, test_mode=False)
@@ -110,14 +108,12 @@ def main(cfg):
     model = model.to(device)
 
     param = sum(p.numel() for p in model.parameters())
-    logger.info('total params:{:.4f}M'.format(param / (1000 ** 2)))
 
     if args.mode == 'train':
         logger.info('Training Mode')
         train(model, train_loader, test_loader, gt, logger)
 
     elif args.mode == 'infer':
-        logger.info('Test Mode')
         if cfg.ckpt_path is not None:
             load_checkpoint(model, cfg.ckpt_path, logger)
         else:
@@ -130,8 +126,8 @@ def main(cfg):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='WeaklySupAnoDet')
-    parser.add_argument('--dataset', default='ucf', help='anomaly video dataset')
-    parser.add_argument('--mode', default='train', help='model status: (train or infer)')
+    parser.add_argument('--dataset', default='xd', help='anomaly video dataset')
+    parser.add_argument('--mode', default='infer', help='model status: (train or infer)')
     args = parser.parse_args()
     cfg = build_config(args.dataset)
     main(cfg)

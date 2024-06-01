@@ -9,5 +9,3 @@ with open('train_split.list', 'w+') as f:
             name = line.strip('\n').split('/')[-1]
             newline = 'train/'+name
             f.write(newline + '\n')
-
-print('finish.')
