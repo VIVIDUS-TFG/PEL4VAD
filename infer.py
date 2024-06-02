@@ -13,7 +13,7 @@ import os
 from torch.utils.data import DataLoader
 from dataset import *
 
-def infer_func(model, dataloader, gt, logger, cfg):
+def infer_func(model, dataloader, gt, logger, cfg, args):
     st = time.time()
     with torch.no_grad():
         model.eval()
@@ -77,27 +77,31 @@ def infer_func(model, dataloader, gt, logger, cfg):
             message_frames = ""            
             message_second = ""            
 
-        # Create a list of dictionaries to store the data
-        data = []
-        data.append({
-            'video_id': "IDVIDEO",
-            'frame_number': pred_binary,
-            "violence_label": "1" if any(pred == 1 for pred in pred_binary) else "0",
-        })
+        if args.evaluate == 'true':
+            # Create a list of dictionaries to store the data
+            data = []
+            data.append({
+                'video_id': "IDVIDEO",
+                'frame_number': pred_binary,
+                "violence_label": "1" if any(pred == 1 for pred in pred_binary) else "0",
+            })
 
-        # Write the data to a CSV file
-        csv_file = 'inference.csv'
+            # Write the data to a CSV file
+            csv_file = 'inference.csv'
 
-        fieldnames = ['video_id', 'frame_number', 'violence_label']
-        with open(csv_file, 'w', newline='') as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(data)
+            fieldnames = ['video_id', 'frame_number', 'violence_label']
+            file_exists = os.path.isfile(csv_file)
+
+            with open(csv_file, 'a', newline='') as file:
+                writer = csv.DictWriter(file, fieldnames=fieldnames)
+                if not file_exists:
+                    writer.writeheader()
+                writer.writerows(data)
         
         time_elapsed = time.time() - st
         print(message + message_frames)
         print(message + message_second)
-        print('Test complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60)) 
+        print('Test complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
 
 def parse_time(seconds):
     seconds = max(0, seconds)
@@ -126,7 +130,7 @@ def load_checkpoint(model, ckpt_path, logger):
     else:
         logger.info('Not found pretrained checkpoint file.')
 
-def main(cfg):
+def main(cfg,args):
     logger = get_logger(cfg.logs_dir)
     setup_seed(cfg.seed)
 
@@ -146,12 +150,13 @@ def main(cfg):
         load_checkpoint(model, cfg.ckpt_path, logger)
     else:
         logger.info('infer from random initialization')
-    infer_func(model, test_loader, gt, logger, cfg)
+    infer_func(model, test_loader, gt, logger, cfg, args)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='WeaklySupAnoDet')
     parser.add_argument('--dataset', default='xd', help='anomaly video dataset')
     parser.add_argument('--mode', default='infer', help='model status: (train or infer)')
+    parser.add_argument('--evaluate', default='false', help='to infer a video or evaluate model metrics: (false or true)')
     args = parser.parse_args()
     cfg = build_config(args.dataset)
-    main(cfg)
+    main(cfg,args)
