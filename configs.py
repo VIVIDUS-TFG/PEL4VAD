@@ -48,7 +48,7 @@ def build_config(dataset):
         cfg.lamda = 1
         cfg.seed = 4
         # test settings
-        cfg.test_bs = 5
+        cfg.test_bs = 1
         cfg.smooth = 'fixed'  # ['fixed': 8, slide': 3]
         cfg.kappa = 8  # smooth window
         cfg.ckpt_path = './ckpt/xd__8526.pkl'

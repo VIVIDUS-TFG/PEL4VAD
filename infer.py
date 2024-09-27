@@ -47,61 +47,7 @@ def infer_func(model, dataloader, gt, logger, cfg, args):
 
         pred = list(pred.cpu().detach().numpy())
         pred_binary = [1 if pred_value > 0.35 else 0 for pred_value in pred]
-
-        video_duration = int(np.ceil(len(pred_binary) * 0.96)) # len(pred_binary) = video_duration / 0.96
-
-        if any(pred == 1 for pred in pred_binary):
-            message= "El video contiene violencia. "
-            message_second = "Los intervalos con violencia son: "
-            message_frames = "En un rango de [0-"+ str(len(pred_binary) - 1) +"] los frames con violencia son: "
-
-            start_idx = None
-            for i, pred in enumerate(pred_binary):
-                if pred == 1:
-                    if start_idx is None:
-                        start_idx = i
-                elif start_idx is not None:
-                    message_frames += ("[" + str(start_idx) + " - " + str(i - 1) + "]" + ", ") if i-1 != start_idx else ("[" + str(start_idx) + "], ")
-                    message_second += ("[" + parse_time(int(np.floor((start_idx + 1)* 0.96))) + " - " + parse_time(int(np.ceil(i * 0.96))) + "], ")
-                    start_idx = None
-
-            if start_idx is not None:
-                message_frames += ("[" + str(start_idx) + " - " + str(len(pred_binary) - 1) + "]") if len(pred_binary) - 1 != start_idx else ("[" + str(start_idx) + "]")
-                message_second += ("[" + parse_time(int(np.floor((start_idx + 1) * 0.96))) + " - " + parse_time(video_duration) + "]")
-            else:
-                message_frames = message_frames[:-2]              
-                message_second = message_second[:-2]              
-
-        else:
-            message= "El video no contiene violencia."
-            message_frames = ""            
-            message_second = ""            
-
-        if args.evaluate == 'true':
-            # Create a list of dictionaries to store the data
-            data = []
-            data.append({
-                'video_id': "IDVIDEO",
-                'frame_number': pred_binary,
-                "violence_label": "1" if any(pred == 1 for pred in pred_binary) else "0",
-            })
-
-            # Write the data to a CSV file
-            csv_file = 'inference.csv'
-
-            fieldnames = ['video_id', 'frame_number', 'violence_label']
-            file_exists = os.path.isfile(csv_file)
-
-            with open(csv_file, 'a', newline='') as file:
-                writer = csv.DictWriter(file, fieldnames=fieldnames)
-                if not file_exists:
-                    writer.writeheader()
-                writer.writerows(data)
-        
-        time_elapsed = time.time() - st
-        print(message + message_frames)
-        print(message + message_second)
-        print('Test complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
+        return pred_binary
 
 def parse_time(seconds):
     seconds = max(0, seconds)
@@ -130,6 +76,9 @@ def load_checkpoint(model, ckpt_path, logger):
     else:
         logger.info('Not found pretrained checkpoint file.')
 
+def save_results(results, filename):
+    np.save(filename, results)
+    
 def main(cfg,args):
     logger = get_logger(cfg.logs_dir)
     setup_seed(cfg.seed)
@@ -144,16 +93,17 @@ def main(cfg,args):
     device = torch.device("cuda")
     model = model.to(device)
 
-    param = sum(p.numel() for p in model.parameters())
-
     if cfg.ckpt_path is not None:
         load_checkpoint(model, cfg.ckpt_path, logger)
     else:
         logger.info('infer from random initialization')
-    infer_func(model, test_loader, gt, logger, cfg, args)
-    
+
+    results = infer_func(model, test_loader, gt, logger, cfg, args)
+    save_results(results, os.path.join(args.output_path, 'results.npy'))
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='WeaklySupAnoDet')
+    parser.add_argument('--output-path', help='output path')
     parser.add_argument('--dataset', default='xd', help='anomaly video dataset')
     parser.add_argument('--mode', default='infer', help='model status: (train or infer)')
     parser.add_argument('--evaluate', default='false', help='to infer a video or evaluate model metrics: (false or true)')
