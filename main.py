@@ -1,3 +1,4 @@
+from infer import infer_func
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch
@@ -6,7 +7,6 @@ import numpy as np
 import random
 from configs import build_config
 from utils import setup_seed
-from log import get_logger
 
 from model import XModel
 from dataset import *
@@ -21,7 +21,7 @@ import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 
-def load_checkpoint(model, ckpt_path, logger):
+def load_checkpoint(model, ckpt_path):
     if os.path.isfile(ckpt_path):
         weight_dict = torch.load(ckpt_path)
         model_dict = model.state_dict()
@@ -31,15 +31,6 @@ def load_checkpoint(model, ckpt_path, logger):
             if name in model_dict:
                 if param.size() == model_dict[name].size():
                     model_dict[name].copy_(param)
-                else:
-                    logger.info('{} size mismatch: load {} given {}'.format(
-                        name, param.size(), model_dict[name].size()))
-            else:
-                logger.info('{} not found in model dict.'.format(name))
-    else:
-        logger.info('Not found pretrained checkpoint file.')
-
-
 def train(model, train_loader, test_loader, gt, logger):
     if not os.path.exists(cfg.save_dir):
         os.makedirs(cfg.save_dir)
@@ -81,7 +72,6 @@ def train(model, train_loader, test_loader, gt, logger):
 
 
 def main(cfg):
-    logger = get_logger(cfg.logs_dir)
     setup_seed(cfg.seed)
 
     if cfg.dataset == 'ucf-crime':
@@ -110,15 +100,12 @@ def main(cfg):
     param = sum(p.numel() for p in model.parameters())
 
     if args.mode == 'train':
-        logger.info('Training Mode')
-        train(model, train_loader, test_loader, gt, logger)
+        train(model, train_loader, test_loader, gt)
 
     elif args.mode == 'infer':
         if cfg.ckpt_path is not None:
-            load_checkpoint(model, cfg.ckpt_path, logger)
-        else:
-            logger.info('infer from random initialization')
-        infer_func(model, test_loader, gt, logger, cfg)
+            load_checkpoint(model, cfg.ckpt_path)
+        infer_func(model, test_loader, gt, cfg)
 
     else:
         raise RuntimeError('Invalid status!')

@@ -4,16 +4,14 @@ from utils import fixed_smooth, slide_smooth
 from test import *
 import csv
 import argparse
-from main import main
 from configs import build_config
 from utils import setup_seed
-from log import get_logger
 from model import XModel
 import os
 from torch.utils.data import DataLoader
 from dataset import *
 
-def infer_func(model, dataloader, gt, logger, cfg, args):
+def infer_func(model, dataloader, gt, cfg, args):
     st = time.time()
     with torch.no_grad():
         model.eval()
@@ -61,7 +59,7 @@ def parse_time(seconds):
         sec = str(sec)
     return str(seconds // 60) + ":" + sec
 
-def load_checkpoint(model, ckpt_path, logger):
+def load_checkpoint(model, ckpt_path):
     if os.path.isfile(ckpt_path):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         weight_dict = torch.load(ckpt_path, map_location=device)
@@ -72,19 +70,11 @@ def load_checkpoint(model, ckpt_path, logger):
             if name in model_dict:
                 if param.size() == model_dict[name].size():
                     model_dict[name].copy_(param)
-                else:
-                    logger.info('{} size mismatch: load {} given {}'.format(
-                        name, param.size(), model_dict[name].size()))
-            else:
-                logger.info('{} not found in model dict.'.format(name))
-    else:
-        logger.info('Not found pretrained checkpoint file.')
 
 def save_results(results, filename):
     np.save(filename, results)
     
 def main(cfg,args):
-    logger = get_logger(cfg.logs_dir)
     setup_seed(cfg.seed)
 
     test_data = XDataset(cfg, test_mode=True)
@@ -99,11 +89,10 @@ def main(cfg,args):
     model = model.to(device)
 
     if cfg.ckpt_path is not None:
-        load_checkpoint(model, cfg.ckpt_path, logger)
-    else:
-        logger.info('infer from random initialization')
+        load_checkpoint(model, cfg.ckpt_path)
 
-    results = infer_func(model, test_loader, gt, logger, cfg, args)
+
+    results = infer_func(model, test_loader, gt, cfg, args)
     save_results(results, os.path.join(args.output_path, 'results.npy'))
 
 if __name__ == '__main__':
