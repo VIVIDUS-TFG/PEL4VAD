@@ -17,13 +17,14 @@ def infer_func(model, dataloader, gt, logger, cfg, args):
     st = time.time()
     with torch.no_grad():
         model.eval()
-        pred = torch.zeros(0).cuda()
-        normal_preds = torch.zeros(0).cuda()
-        normal_labels = torch.zeros(0).cuda()
-        gt_tmp = torch.tensor(gt.copy()).cuda()
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        pred = torch.zeros(0).to(device)
+        normal_preds = torch.zeros(0).to(device)
+        normal_labels = torch.zeros(0).to(device)
+        gt_tmp = torch.tensor(gt.copy()).to(device)
 
         for i, (v_input, name) in enumerate(dataloader):
-            v_input = v_input.float().cuda(non_blocking=True)
+            v_input = v_input.float()
             seq_len = torch.sum(torch.max(torch.abs(v_input), dim=2)[0] > 0, 1)
             logits, _ = model(v_input, seq_len)
             logits = torch.mean(logits, 0)
@@ -60,7 +61,8 @@ def parse_time(seconds):
 
 def load_checkpoint(model, ckpt_path, logger):
     if os.path.isfile(ckpt_path):
-        weight_dict = torch.load(ckpt_path)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        weight_dict = torch.load(ckpt_path, map_location=device)
         model_dict = model.state_dict()
         for name, param in weight_dict.items():
             if 'module' in name:
@@ -90,7 +92,8 @@ def main(cfg,args):
 
     model = XModel(cfg)
     gt = np.load(cfg.gt)
-    device = torch.device("cuda")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     model = model.to(device)
 
     if cfg.ckpt_path is not None:

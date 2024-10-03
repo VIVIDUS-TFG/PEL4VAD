@@ -29,12 +29,13 @@ class XEncoder(nn.Module):
         return x_e, x
 
     def get_mask(self, window_size, temporal_scale, seq_len):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         m = torch.zeros((temporal_scale, temporal_scale))
         w_len = window_size
         for j in range(temporal_scale):
             for k in range(w_len):
                 m[j, min(max(j - w_len // 2 + k, 0), temporal_scale - 1)] = 1.
 
-        m = m.repeat(self.n_heads, len(seq_len), 1, 1).cuda()
+        m = m.repeat(self.n_heads, len(seq_len), 1, 1).to(device)
 
         return m

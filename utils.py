@@ -145,7 +145,8 @@ def pairwise_minus_l2_distance(x, y):
 
 
 def fixed_smooth(logits, t_size):
-    ins_preds = torch.zeros(0).cuda()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    ins_preds = torch.zeros(0).to(device)
     assert t_size > 1
     if len(logits) % t_size != 0:
         delta = t_size - len(logits) % t_size
@@ -163,7 +164,8 @@ def fixed_smooth(logits, t_size):
 
 def slide_smooth(logits, t_size, mode='zero'):
     assert t_size > 1
-    ins_preds = torch.zeros(0).cuda()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    ins_preds = torch.zeros(0).to(device)
     padding = t_size - 1
     if mode == 'zero':
         logits = F.pad(logits, (0, padding), 'constant', 0)

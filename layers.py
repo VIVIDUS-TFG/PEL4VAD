@@ -19,9 +19,10 @@ class DistanceAdj(nn.Module):
         self.b.data.fill_(bias)
 
     def forward(self, batch_size, seq_len):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         arith = np.arange(seq_len).reshape(-1, 1)
         dist = pdist(arith, metric='cityblock').astype(np.float32)
-        dist = torch.from_numpy(squareform(dist)).cuda()
+        dist = torch.from_numpy(squareform(dist)).to(device)
         # dist = torch.exp(-self.sigma * dist ** 2)
         dist = torch.exp(-torch.abs(self.w * dist ** 2 - self.b))
         dist = torch.unsqueeze(dist, 0).repeat(batch_size, 1, 1)
