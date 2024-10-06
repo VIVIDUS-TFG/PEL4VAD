@@ -98,9 +98,10 @@ def main(cfg,args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='WeaklySupAnoDet')
     parser.add_argument('--output-path', help='output path')
+    parser.add_argument('--rgb-list', help='rgb list path')
     parser.add_argument('--dataset', default='xd', help='anomaly video dataset')
     parser.add_argument('--mode', default='infer', help='model status: (train or infer)')
     parser.add_argument('--evaluate', default='false', help='to infer a video or evaluate model metrics: (false or true)')
     args = parser.parse_args()
-    cfg = build_config(args.dataset)
+    cfg = build_config(args.dataset, args.rgb_list)
     main(cfg,args)

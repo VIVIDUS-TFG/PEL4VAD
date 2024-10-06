@@ -1,5 +1,5 @@
 
-def build_config(dataset):
+def build_config(dataset, rgb_list: str):
     cfg = type('', (), {})()
     if dataset in ['ucf', 'ucf-crime']:
         cfg.dataset = 'ucf-crime'
@@ -33,7 +33,7 @@ def build_config(dataset):
         cfg.metrics = 'AP'
         cfg.feat_prefix = '/data/pyj/feat/xd-i3d'
         cfg.train_list = './list/xd/train.list'
-        cfg.test_list = './list/rgb_test.list'
+        cfg.test_list = rgb_list
         cfg.token_feat = './list/xd/xd-prompt.npy'
         cfg.gt = './list/xd/xd-gt.npy'
         # TCA settings
